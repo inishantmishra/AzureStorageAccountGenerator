@@ -14,7 +14,7 @@ namespace AzureStorageAccountGenerator.Services
     {
         Task<string> GetAuthorizationHeader();
         Task<IPage<StorageAccount>> GetAllStorageAccount(StorageManagementClient storageMgmtClient);
-        Task<StorageAccount> CreateStorageAccount(string acctName,StorageManagementClient storageMgmtClient);
+        Task<List<StorageAccount>> CreateStorageAccount(StorageManagementClient storageMgmtClient);
         Task DeleteStorageAccount(string acctName, StorageManagementClient storageMgmtClient);
 
         Task<StorageAccount> UpdateStorageAccountSku(string updatedName, string accountName, StorageManagementClient storageMgmtClient);

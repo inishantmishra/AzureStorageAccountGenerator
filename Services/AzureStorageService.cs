@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Microsoft.Rest;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest.Azure;
+using AzureStorageAccountGenerator.Repository;
+using AzureStorageAccountGenerator.Models;
 
 namespace AzureStorageAccountGenerator.Services
 {
@@ -19,22 +21,26 @@ namespace AzureStorageAccountGenerator.Services
         string clientId = string.Empty;
         string clientSecretKey = string.Empty;
         string tenantId = string.Empty;
-        string resourceGroupName = "TestResource";
-        const string DefaultLocation = "westus";
-        public static Sku DefaultSku = new Sku(SkuName.StandardLRS);
-        public static Dictionary<string, string> DefaultTags = new Dictionary<string, string>
-        {
-            {"key123","value123"},
-            {"key234","value234"}
-        };
+        string resourceGroupName = string.Empty;
+        string DefaultLocation = string.Empty;
+        
+        //public static Dictionary<string, string> DefaultTags = new Dictionary<string, string>
+        //{
+        //    {"key123","value123"},
+        //    {"key234","value234"}
+        //};
         private readonly IConfiguration _configuration;
+        private readonly IAzureStorageRepo _azureStorageRepo;
 
-        public AzureStorageService(IConfiguration configuration)
+        public AzureStorageService(IConfiguration configuration, IAzureStorageRepo azureStorageRepo)
         {
             _configuration = configuration;
+            _azureStorageRepo = azureStorageRepo;
             clientId = _configuration.GetSection("AppSettings:clientId").Value;
             clientSecretKey = _configuration.GetSection("AppSettings:clientSecretKey").Value;
             tenantId = _configuration.GetSection("AppSettings:tenantId").Value;
+            resourceGroupName= _configuration.GetSection("AppSettings:resourceGroupName").Value;
+            DefaultLocation = _configuration.GetSection("AzureStorageSettings:DefaultLocation").Value;
         }
 
         public async Task<string> GetAuthorizationHeader()
@@ -59,23 +65,62 @@ namespace AzureStorageAccountGenerator.Services
             
         }
 
-        public async Task<StorageAccount> CreateStorageAccount(string accountName, StorageManagementClient storageMgmtClient)
+        public async Task<List<StorageAccount>> CreateStorageAccount(StorageManagementClient storageMgmtClient)
         {
+            IList<DMSServiceInfo> dmsServiceList = await _azureStorageRepo.GetDMSServiceInfo().ConfigureAwait(false);
             StorageAccountCreateParameters parameters = GetDefaultStorageAccountParameters();
-            var storageAccount = await storageMgmtClient.StorageAccounts.CreateAsync(resourceGroupName, accountName, parameters);
-            await storageMgmtClient.BlobContainers.CreateAsync(resourceGroupName, accountName, accountName, GetBlobContainer());
-
-            BlobServiceProperties blobProperties = new BlobServiceProperties
+            List<StorageAccount> strList = new List<StorageAccount>();
+            foreach (var service in dmsServiceList)
             {
-                DeleteRetentionPolicy = new DeleteRetentionPolicy
+                var uri = new Uri(service.DMSTenantURL);
+                var sURL = uri.Host;
+                string[] names = sURL.Split('.');
+                string accountName = service.DatabaseName + names[0];
+                if (service.IsReplication)
                 {
-                    Enabled = true,
-                    Days = 7
+                    parameters.Sku = new Sku(SkuName.StandardGRS);
                 }
-            };
+                else
+                {
+                    parameters.Sku = new Sku(SkuName.StandardLRS);
+                }
 
-            storageMgmtClient.BlobServices.SetServiceProperties(resourceGroupName, accountName, blobProperties);
-            return storageAccount;
+                if(string.IsNullOrEmpty(service.Location))
+                {
+                    parameters.Location = DefaultLocation;
+                }
+                else
+                {
+                    parameters.Location = service.Location;
+                }
+
+                IDictionary<string, string> tags = new Dictionary<string, string>();
+                tags.Add(accountName, accountName);
+                parameters.Tags = tags;
+
+                var storageAccount = await storageMgmtClient.StorageAccounts.CreateAsync(resourceGroupName, accountName, parameters);
+                await storageMgmtClient.BlobContainers.CreateAsync(resourceGroupName, accountName, accountName, GetBlobContainer());
+
+                BlobServiceProperties blobProperties = new BlobServiceProperties
+                {
+                    DeleteRetentionPolicy = new DeleteRetentionPolicy
+                    {
+                        Enabled = true,
+                        Days = 7
+                    }
+                };
+
+                storageMgmtClient.BlobServices.SetServiceProperties(resourceGroupName, accountName, blobProperties);
+                IList<StorageAccountKey> keys= GetKeysAccess(accountName, storageMgmtClient);
+                string connectionString = GetConnectionString(keys[0].Value, accountName);
+
+                service.AzStorageConnectionString = connectionString;
+                service.AzStorageContainer = accountName;
+                
+                int record= await _azureStorageRepo.UpdateAZConnectionStringandContainer(service).ConfigureAwait(false);
+                strList.Add(storageAccount);
+            }
+            return strList;
         }
 
         public async Task<StorageAccount> GetProperties(string accountName, StorageManagementClient storageMgmtClient)
@@ -134,10 +179,7 @@ namespace AzureStorageAccountGenerator.Services
         {
             StorageAccountCreateParameters account = new StorageAccountCreateParameters
             {
-                Location = DefaultLocation,
                 Kind = Kind.StorageV2,
-                Tags = DefaultTags,
-                Sku = DefaultSku,
                 AccessTier = AccessTier.Hot,
                 MinimumTlsVersion = MinimumTlsVersion.TLS12,
                 AllowBlobPublicAccess = true,
