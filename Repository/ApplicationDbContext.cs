@@ -19,5 +19,9 @@ namespace AzureStorageAccountGenerator.Repository
         }
 
         public virtual DbSet<DMSServiceInfo> DMSServiceInfo { get; set; }
+        public virtual DbSet<StorageAccountModel> StorageAccounts { get; set; }
+        public virtual DbSet<ExceptionLog> ExceptionLogs { get; set; }
+
+
     }
 }

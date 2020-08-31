@@ -16,15 +16,7 @@ namespace AzureStorageAccountGenerator.Services
         Task<IPage<StorageAccount>> GetAllStorageAccount(StorageManagementClient storageMgmtClient);
         Task<List<StorageAccount>> CreateStorageAccount(StorageManagementClient storageMgmtClient);
         Task DeleteStorageAccount(string acctName, StorageManagementClient storageMgmtClient);
-
-        Task<StorageAccount> UpdateStorageAccountSku(string updatedName, string accountName, StorageManagementClient storageMgmtClient);
-
-        Task RegisterStorageResourceProvider(ResourceManagementClient resourcesClient);
-
-        Task<ResourceGroup?> CreateResourceGroup(string rgname, ResourceManagementClient resourcesClient);
-        Task<StorageAccount> GetProperties(string accountName, StorageManagementClient storageMgmtClient);
         IList<StorageAccountKey> GetKeysAccess(string accountName, StorageManagementClient storageMgmtClient);
-
         string GetConnectionString(string key, string accountName);
     }
 }

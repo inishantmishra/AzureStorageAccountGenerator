@@ -5,6 +5,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20200831055329_StorageAccountModel Added.cs" />
+    <Compile Remove="Migrations\20200831055329_StorageAccountModel Added.Designer.cs" />
+    <Compile Remove="Migrations\20200831055736_StorageAccountModel Added.cs" />
+    <Compile Remove="Migrations\20200831055736_StorageAccountModel Added.Designer.cs" />
+    <Compile Remove="Migrations\20200831060532_StorageAccountModel Added.cs" />
+    <Compile Remove="Migrations\20200831060532_StorageAccountModel Added.Designer.cs" />
+    <Compile Remove="Migrations\20200831060622_StorageAccountModel Added.cs" />
+    <Compile Remove="Migrations\20200831060622_StorageAccountModel Added.Designer.cs" />
+    <Compile Remove="Migrations\20200831061221_StorageAccountModel Added.cs" />
+    <Compile Remove="Migrations\20200831061221_StorageAccountModel Added.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.7.0-preview" />
     <PackageReference Include="Microsoft.Azure.Management.Storage" Version="17.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.7" />

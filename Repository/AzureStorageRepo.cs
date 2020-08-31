@@ -18,20 +18,32 @@ namespace AzureStorageAccountGenerator.Repository
         public async Task<IList<DMSServiceInfo>> GetDMSServiceInfo()
         {
            return await Context.DMSServiceInfo.AsNoTracking()
-                 .Where(x => x.AzStorageConnectionString==null)
+                 .Where(x => x.AzStorageConnectionString==null && !x.IsDeleted)
                  .ToListAsync();
         }
 
-        public async Task<DMSServiceInfo> GetDMSServiceInfoById(int id)
+        public async Task<DMSServiceInfo> GetDMSServiceInfoByAccountName(string accountName)
         {
-            return await Context.DMSServiceInfo.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            return await Context.DMSServiceInfo.AsNoTracking().FirstOrDefaultAsync(x => x.AzStorageContainer == accountName);
         }
 
-        public async Task<int> UpdateAZConnectionStringandContainer(DMSServiceInfo serviceInfo)
+        public async Task<int> UpdateDMSServiceInfo(DMSServiceInfo serviceInfo)
         {
             Context.DMSServiceInfo.Attach(serviceInfo);
             var entry = Context.Entry(serviceInfo);
             entry.State = EntityState.Modified;
+            return await Context.SaveChangesAsync();
+        }
+
+        public async Task<int> UpdateStorageAccountDetails(StorageAccountModel storageModel)
+        {
+            Context.StorageAccounts.Add(storageModel);
+            return await Context.SaveChangesAsync();
+        }
+
+        public async Task<int> AddExceptionLogs(ExceptionLog log)
+        {
+            Context.ExceptionLogs.Add(log);
             return await Context.SaveChangesAsync();
         }
     }

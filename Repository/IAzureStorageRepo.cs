@@ -9,8 +9,9 @@ namespace AzureStorageAccountGenerator.Repository
    public interface IAzureStorageRepo
     {
         Task<IList<DMSServiceInfo>> GetDMSServiceInfo();
-        Task<int> UpdateAZConnectionStringandContainer(DMSServiceInfo serviceInfo);
-
-        Task<DMSServiceInfo> GetDMSServiceInfoById(int id);
+        Task<int> UpdateDMSServiceInfo(DMSServiceInfo serviceInfo);
+        Task<DMSServiceInfo> GetDMSServiceInfoByAccountName(string accountName);
+        Task<int> UpdateStorageAccountDetails(StorageAccountModel storageModel);
+        Task<int> AddExceptionLogs(ExceptionLog log);
     }
 }

@@ -39,6 +39,7 @@ namespace AzureStorageAccountGenerator.Controllers
 
             StorageManagementClient storageMgmtClient = new StorageManagementClient(credential) { SubscriptionId = subscriptionId };
             IPage<StorageAccount> storageAccounts = await _azureStorageService.GetAllStorageAccount(storageMgmtClient);
+
             StorageAccountListResult resultList = new StorageAccountListResult();
             resultList.Count = storageAccounts.ToList().Count;
             resultList.value = storageAccounts.ToList();
@@ -48,29 +49,26 @@ namespace AzureStorageAccountGenerator.Controllers
         [HttpPost("CreateStorageAccount")]
         public async Task<IActionResult> GenerateAccount()
         {
-            string token= _azureStorageService.GetAuthorizationHeader().Result;
-            TokenCredentials credential = new TokenCredentials(token);
+            List<StorageAccount> storageAccounts = new List<StorageAccount>();
+            try
+            {
+                string token = _azureStorageService.GetAuthorizationHeader().Result;
+                TokenCredentials credential = new TokenCredentials(token);
 
-            StorageManagementClient storageMgmtClient = new StorageManagementClient(credential) { SubscriptionId = subscriptionId };
-            ResourceManagementClient resourcesClient = new ResourceManagementClient(credential) { SubscriptionId = subscriptionId };
-            
-            //await _azureStorageService.RegisterStorageResourceProvider(resourcesClient);
-            List<StorageAccount> storageAccounts=  await _azureStorageService.CreateStorageAccount(storageMgmtClient);
-           
+                StorageManagementClient storageMgmtClient = new StorageManagementClient(credential) { SubscriptionId = subscriptionId };
+                ResourceManagementClient resourcesClient = new ResourceManagementClient(credential) { SubscriptionId = subscriptionId };
+
+                //await _azureStorageService.RegisterStorageResourceProvider(resourcesClient);
+                storageAccounts = await _azureStorageService.CreateStorageAccount(storageMgmtClient);
+            }
+            catch(Exception ex)
+            {
+                
+                throw ex;
+            }
             return Ok(storageAccounts);
         }
 
-
-        [HttpGet("GetAccountProperties")]
-        public async Task<IActionResult> GetAccountProperties(string accountName)
-        {
-            string token = _azureStorageService.GetAuthorizationHeader().Result;
-            TokenCredentials credential = new TokenCredentials(token);
-            StorageManagementClient storageMgmtClient = new StorageManagementClient(credential) { SubscriptionId = subscriptionId };
-            StorageAccount strAcnt = await _azureStorageService.GetProperties(accountName, storageMgmtClient);
-            
-            return Ok(strAcnt);
-        }
 
         [HttpDelete("DeleteStorageAccount")]
         public async Task<IActionResult> DeleteStorageAccount(string accountName)
@@ -82,19 +80,6 @@ namespace AzureStorageAccountGenerator.Controllers
 
             return Ok();
         }
-
-        [HttpGet("GetConnectionString")]
-        public async Task<IActionResult> GetConnectionString(string accountName)
-        {
-            string token = _azureStorageService.GetAuthorizationHeader().Result;
-            TokenCredentials credential = new TokenCredentials(token);
-            StorageManagementClient storageMgmtClient = new StorageManagementClient(credential) { SubscriptionId = subscriptionId };
-            IList<StorageAccountKey> keys = _azureStorageService.GetKeysAccess(accountName, storageMgmtClient);
-            string connectionString= _azureStorageService.GetConnectionString(keys[0].Value, accountName);
-
-            return Ok(connectionString);
-        }
-
 
     }
 }
