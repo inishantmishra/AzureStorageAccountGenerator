@@ -77,6 +77,7 @@ namespace AzureStorageAccountGenerator.Services
                 log.InnerException = ex.InnerException.ToString();
                 log.StackTrace = ex.StackTrace.ToString();
                 log.ExceptionMessage = ex.Message.ToString();
+                await _azureStorageRepo.AddExceptionLogs(log);
                 throw ex;
             }
             StorageAccountCreateParameters parameters = GetDefaultStorageAccountParameters(_configuration);
@@ -146,6 +147,7 @@ namespace AzureStorageAccountGenerator.Services
                     log.InnerException = ex.InnerException.ToString();
                     log.StackTrace = ex.StackTrace.ToString();
                     log.ExceptionMessage = ex.Message.ToString();
+                    await _azureStorageRepo.AddExceptionLogs(log);
                     throw ex;
                 }
             }
@@ -192,8 +194,8 @@ namespace AzureStorageAccountGenerator.Services
 
         public string GetConnectionString(string key, string accountName)
         {
-            string connectionString = "DefaultEndpointsProtocol=https;AccountName = myAccountName;AccountKey = myAccountKey;EndpointSuffix = mySuffix;";
-            connectionString = connectionString.Replace("myAccountName", accountName).Replace("myAccountKey", key).Replace("mySuffix", "core.windows.net");
+            string connectionString = "DefaultEndpointsProtocol=https;AccountName=myAccountName;AccountKey=myAccountKey;EndpointSuffix=mySuffix;";
+            connectionString = connectionString.Replace("myAccountName", accountName).Replace("myAccountKey", key).Replace("mySuffix", "core.windows.net").Replace(" ","");
             return connectionString;
         }
 
